@@ -1,24 +1,6 @@
 version: "3.7"
 
 services:
-  caddy:
-    container_name: caddy
-    image: docker.io/library/caddy:2-alpine
-    network_mode: host
-    restart: unless-stopped
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data:rw
-      - caddy-config:/config:rw
-    environment:
-      - SEARXNG_HOSTNAME=${SEARXNG_HOSTNAME:-http://localhost}
-      - SEARXNG_TLS=${LETSENCRYPT_EMAIL:-internal}
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "1m"
-        max-file: "1"
-
   redis:
     container_name: redis
     image: docker.io/valkey/valkey:8-alpine
@@ -36,17 +18,20 @@ services:
 
   searxng:
     container_name: searxng
-    image: docker.io/searxng/searxng:latest
+    image: searxng/searxng:latest
     restart: unless-stopped
     networks:
       - searxng
     ports:
-      - "127.0.0.1:8080:8080"
+      - "0.0.0.0:8080:8080"
     volumes:
+      - engines-file:/usr/local/searxng/searx/engines  #这里将搜引擎目录持久化出来 是因为searxng docker镜像默是缺失国内搜索引擎的配置的
       - ./searxng:/etc/searxng:rw
-      - searxng-data:/var/cache/searxng:rw
     environment:
       - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME:-localhost}/
+      - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
+      - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS:-4}
+      - SEARXNG_SETTINGS_PATH=/etc/searxng/settings.yml
     logging:
       driver: "json-file"
       options:
@@ -56,8 +41,18 @@ services:
 networks:
   searxng:
 
+#卷持久化路径需要配置一下 不了解可以问一下ai都是什么意思
 volumes:
-  caddy-data:
-  caddy-config:
   valkey-data2:
-  searxng-data:
+   driver: local
+   driver_opts:
+     type: none
+     o: bind
+     device: /Users/laixufei/searxng-docker/redis/valkey 
+
+  engines-file:
+   driver: local
+   driver_opts:
+     type: none
+     o: bind
+     device: /Users/laixufei/searxng-docker/engines-file
