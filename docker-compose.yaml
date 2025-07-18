@@ -48,11 +48,11 @@ volumes:
    driver_opts:
      type: none
      o: bind
-     device: /Users/laixufei/searxng-docker/redis/valkey 
+     device: /opt/pros/searxng-docker/redis/valkey
 
   engines-file:
    driver: local
    driver_opts:
      type: none
      o: bind
-     device: /Users/laixufei/searxng-docker/engines-file
+     device: /opt/pros/searxng-docker/engines-file
